@@ -4,6 +4,7 @@ import pyspark.sql.functions as f
 from pyspark.sql.types import *
 from pyspark.sql.window import Window
 import numpy as np
+import argparse
 
 spark = SparkSession.builder.getOrCreate()
 
@@ -83,7 +84,19 @@ for i,gw in enumerate(gwas_list[1:1001]):
 #	L.to_csv(path2save+gwn+".csv",index=False)
 #	L.coalesce(1).write.format
 
+def parse_args():
+    	parser=argparse.ArgumentParser()
+		parser.add_argument("--input_sumstats", help="input sumstat parquet file", type=str, required=True)
+		parser.add_argument("--index", help="variant index to join rsID")
+		parser.add_argument("--HM3_SNPs", help="Hapmap3 SNPs to include in the analysis")
+		parser.add_argument("--gene_index")
+
+def main():
+    	args=parse_args()
+
 print("Done!")
+
+# python munge_sumstats.py --input_sumstats ${trait}.parquet --index  
 
 # Add rsID
 # remove duplicates
