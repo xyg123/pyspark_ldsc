@@ -42,7 +42,7 @@ def main():
     gwas=gwas.withColumn("lexa1a2",lex_orderUDF(f.col("ref"),f.col("alt")))
     gwas=gwas.withColumn("snpid",f.concat_ws("_",f.col("chrom"),f.col("pos"),f.col("lexa1a2")))
 
-    gwas=gwas.join(VI, ["snpid"]).distinct().filter(gwas.rs_id.isNotNull()).select(f.col('rs_id').alias('SNP'), 
+    gwas=gwas.join(VI, ["snpid"]).distinct().select(f.col('rs_id').alias('SNP'), 
                                                     f.col('pval').alias('P'), 
                                                     f.col('ref').alias('A1'), 
                                                     f.col('alt').alias('A2'), 
@@ -50,7 +50,7 @@ def main():
                                                     f.col('n_cases').alias('N_CASES'),
                                                     f.col('beta').alias('B'),
                                                     f.col('se').alias('SE'),
-                                                    f.col('eaf').alias('EAF'))
+                                                    f.col('eaf').alias('EAF')).filter(f.col('SNP').isNotNull())
     gwas=gwas.toPandas()
     gwas.to_csv(args.outdir+args.input_sumstats+".sumstats", index=False, sep="\t")
 
