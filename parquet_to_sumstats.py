@@ -44,8 +44,10 @@ def main():
 
     gwas=gwas.join(VI, ["snpid"]).distinct().select(cts)
     gwas=gwas.toPandas()
-    gwas.to_csv(args.outdir+args.input_sumstats+".sumstats", index=False)
+    gwas.to_csv(args.outdir+args.input_sumstats+".sumstats", index=False, sep="\t")
 
 if __name__ == '__main__':
     
     main()
+
+# python ~/pyspark_ldsc/parquet_to_sumstats.py --input_sumstats FINNGEN_R6_FG_CVD.parquet --index ~/ldsc/variant_index --outdir ../../input_sumstats/
