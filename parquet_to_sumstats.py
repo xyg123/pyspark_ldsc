@@ -42,7 +42,7 @@ def main():
     gwas=gwas.withColumn("lexa1a2",lex_orderUDF(f.col("ref"),f.col("alt")))
     gwas=gwas.withColumn("snpid",f.concat_ws("_",f.col("chrom"),f.col("pos"),f.col("lexa1a2")))
 
-    gwas=gwas.join(VI, ["snpid"]).distinct().select(f.col('rs_id').alias('SNP'), 
+    gwas=gwas.join(VI, ["snpid"]).distinct().filter(gwas.rs_id.isNotNull()).select(f.col('rs_id').alias('SNP'), 
                                                     f.col('pval').alias('P'), 
                                                     f.col('ref').alias('A1'), 
                                                     f.col('alt').alias('A2'), 
