@@ -9,6 +9,8 @@ def parse_args():
     parser.add_argument("--input_sumstats", help="input sumstat parquet file", type=str, required=True)
     parser.add_argument("--index", help="variant index to join rsID")
     parser.add_argument("--outdir", help="Output directory for sumstats")
+    args = parser.parse_args()
+    return args
 
 def lex_order(str1,str2):
     str1=str1.upper()
@@ -23,6 +25,7 @@ def main():
     spark = SparkSession.builder.getOrCreate()
 
     args=parse_args()
+
     variant_index=spark.read.parquet(args.index)
     
     lex_orderUDF = f.udf(lambda z1,z2: lex_order(z1,z2),f.StringType())
