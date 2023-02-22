@@ -77,7 +77,7 @@ variant_index=variant_index.withColumn("snpid",f.concat_ws("_",f.col("chr_id"),f
 
 VI=variant_index.select(f.col("rs_id"),f.col("snpid"))
 
-HM3_SNPs=spark.read.options(header=True, sep="\t").csv(hm3)
+HM3_SNPs=spark.read.options(header=True, sep="\t").csv(hm3).select(f.col('SNP').alias('rs_id'))
 VI=HM3_SNPs.join(VI,["rs_id"]).distinct()
 
 for gw in gwas_list[1:100]:
