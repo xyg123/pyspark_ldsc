@@ -7,6 +7,7 @@ import numpy as np
 import os
 import argparse
 import gzip 
+from google.cloud import storage
 #from scipy.stats import chi2
 
 """ 
@@ -66,7 +67,10 @@ outdir="gs://genetics-portal-dev-analysis/xg1/rsid_sumstats"
 spark = SparkSession.builder.getOrCreate()
 
 # list GWAS sumstats:
-gwas_list=os.system("gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas")
+storage_client = storage.Client()
+bucket=storage_client.get_bucket("gs://genetics-portal-dev-sumstats/unfiltered/gwas")
+gwas_list=storage_client.list_blobs(bucket)
+#gwas_list=os.system("gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas")
 
 variant_index=spark.read.parquet(index)
 
