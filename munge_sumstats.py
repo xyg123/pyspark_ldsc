@@ -100,7 +100,7 @@ for gw in gwas_list[1:100]:
 													f.col('eaf').alias('EAF')).filter(f.col('SNP').isNotNull())
 	gwas=gwas.toPandas()
 	gwn=gw.replace('gs://genetics-portal-dev-sumstats/unfiltered/gwas/','')
-	gwn=gwn.replace('.parquet','')
+	gwn=gwn.replace('.parquet/','')
 
 	gwas.to_csv(outdir+"/"+gwn+".sumstats.gz", index=False, compression="gzip", sep="\t")
 
