@@ -56,54 +56,50 @@ def lex_order(str1,str2):
 		out=str2+"_"+str1
 	return out	
 
-def main():
 	#args=parse_args()
 	# Hard define some args:
 
-	index="gs://genetics-portal-dev-data/22.09.0/outputs/lut/variant-index"
-	hm3="gs://genetics-portal-dev-analysis/xg1/Configs/w_hm3.snplist"
-	outdir="gs://genetics-portal-dev-analysis/xg1/rsid_sumstats"
-	spark = SparkSession.builder.getOrCreate()
+index="gs://genetics-portal-dev-data/22.09.0/outputs/lut/variant-index"
+hm3="gs://genetics-portal-dev-analysis/xg1/Configs/w_hm3.snplist"
+outdir="gs://genetics-portal-dev-analysis/xg1/rsid_sumstats"
+spark = SparkSession.builder.getOrCreate()
 
-	# list GWAS sumstats:
-	gwas_list=!gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas
+# list GWAS sumstats:
+gwas_list=!gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas
 
-	variant_index=spark.read.parquet(index)
+variant_index=spark.read.parquet(index)
 
-	lex_orderUDF = f.udf(lambda z1,z2: lex_order(z1,z2),f.StringType())
+lex_orderUDF = f.udf(lambda z1,z2: lex_order(z1,z2),f.StringType())
 
-	variant_index=variant_index.withColumn("lexa1a2",lex_orderUDF(f.col("ref_allele"),f.col("alt_allele")))
-	variant_index=variant_index.withColumn("snpid",f.concat_ws("_",f.col("chr_id"),f.col("position"),f.col("lexa1a2")))
-	
-	VI=variant_index.select(f.col("rs_id"),f.col("snpid"))
-	
-	HM3_SNPs=spark.read.options(header=True, sep="\t").csv(hm3)
-	VI=HM3_SNPs.join(VI,["rs_id"]).distinct()
+variant_index=variant_index.withColumn("lexa1a2",lex_orderUDF(f.col("ref_allele"),f.col("alt_allele")))
+variant_index=variant_index.withColumn("snpid",f.concat_ws("_",f.col("chr_id"),f.col("position"),f.col("lexa1a2")))
 
-	for gw in gwas_list[1:100]:
-		gwas=spark.read.parquet(gw)
+VI=variant_index.select(f.col("rs_id"),f.col("snpid"))
 
-		gwas=gwas.withColumn("lexa1a2",lex_orderUDF(f.col("ref"),f.col("alt")))
-		gwas=gwas.withColumn("snpid",f.concat_ws("_",f.col("chrom"),f.col("pos"),f.col("lexa1a2")))
+HM3_SNPs=spark.read.options(header=True, sep="\t").csv(hm3)
+VI=HM3_SNPs.join(VI,["rs_id"]).distinct()
 
-		gwas=gwas.join(VI, ["snpid"]).distinct().select(f.col('rs_id').alias('SNP'), 
-														f.col('pval').alias('P'), 
-														f.col('ref').alias('A1'), 
-														f.col('alt').alias('A2'), 
-														f.col('n_total').alias('N'),
-														f.col('n_cases').alias('N_CASES'),
-														f.col('beta').alias('B'),
-														f.col('se').alias('SE'),
-														f.col('eaf').alias('EAF')).filter(f.col('SNP').isNotNull())
-		gwas=gwas.toPandas()
-		gwn=gw.replace('gs://genetics-portal-dev-sumstats/unfiltered/gwas/','')
-		gwn=gwn.replace('.parquet','')
+for gw in gwas_list[1:100]:
+	gwas=spark.read.parquet(gw)
 
-		gwas.to_csv(outdir+"/"+gwn+".sumstats.gz", index=False, compression="gzip", sep="\t")
+	gwas=gwas.withColumn("lexa1a2",lex_orderUDF(f.col("ref"),f.col("alt")))
+	gwas=gwas.withColumn("snpid",f.concat_ws("_",f.col("chrom"),f.col("pos"),f.col("lexa1a2")))
 
-if __name__ == '__main__':
-    
-    main()
+	gwas=gwas.join(VI, ["snpid"]).distinct().select(f.col('rs_id').alias('SNP'), 
+													f.col('pval').alias('P'), 
+													f.col('ref').alias('A1'), 
+													f.col('alt').alias('A2'), 
+													f.col('n_total').alias('N'),
+													f.col('n_cases').alias('N_CASES'),
+													f.col('beta').alias('B'),
+													f.col('se').alias('SE'),
+													f.col('eaf').alias('EAF')).filter(f.col('SNP').isNotNull())
+	gwas=gwas.toPandas()
+	gwn=gw.replace('gs://genetics-portal-dev-sumstats/unfiltered/gwas/','')
+	gwn=gwn.replace('.parquet','')
+
+	gwas.to_csv(outdir+"/"+gwn+".sumstats.gz", index=False, compression="gzip", sep="\t")
+
 # python munge_sumstats.py --input_sumstats ${trait}.parquet --index  
 
 # Add rsID
