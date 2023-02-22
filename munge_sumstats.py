@@ -35,8 +35,8 @@ ldsc/munge_sumstats.py:
 #	L.to_csv(path2save+gwn+".csv",index=False)
 #	L.coalesce(1).write.format
 
-def parse_args():
-	parser=argparse.ArgumentParser()
+""" def parse_args():
+    	parser=argparse.ArgumentParser()
 	#parser.add_argument("--input_sumstats", help="input sumstat parquet file", type=str)
 	parser.add_argument("--index", help="variant index to join rsID")
 	# Variant index: gs://genetics-portal-dev-data/22.09.0/outputs/lut/variant-index
@@ -45,7 +45,7 @@ def parse_args():
 	parser.add_argument("--outdir", help="Output directory for sumstats")
 	# output to munge : gs://genetics-portal-dev-analysis/xg1/rsid_sumstats
 	args = parser.parse_args()
-	return args
+	return args """
 
 def lex_order(str1,str2):
 	str1=str1.upper()
@@ -57,13 +57,18 @@ def lex_order(str1,str2):
 	return out	
 
 def main():
-	args=parse_args()
+	#args=parse_args()
+	# Hard define some args:
+
+	index="gs://genetics-portal-dev-data/22.09.0/outputs/lut/variant-index"
+	hm3="gs://genetics-portal-dev-analysis/xg1/Configs/w_hm3.snplist"
+	outdir="gs://genetics-portal-dev-analysis/xg1/rsid_sumstats"
 	spark = SparkSession.builder.getOrCreate()
 
 	# list GWAS sumstats:
 	gwas_list=!gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas
 
-	variant_index=spark.read.parquet(args.index)
+	variant_index=spark.read.parquet(index)
 
 	lex_orderUDF = f.udf(lambda z1,z2: lex_order(z1,z2),f.StringType())
 
@@ -72,7 +77,7 @@ def main():
 	
 	VI=variant_index.select(f.col("rs_id"),f.col("snpid"))
 	
-	HM3_SNPs=spark.read.options(header=True, sep="\t").csv(args.hm3)
+	HM3_SNPs=spark.read.options(header=True, sep="\t").csv(hm3)
 	VI=HM3_SNPs.join(VI,["rs_id"]).distinct()
 
 	for gw in gwas_list[1:100]:
@@ -94,7 +99,7 @@ def main():
 		gwn=gw.replace('gs://genetics-portal-dev-sumstats/unfiltered/gwas/','')
 		gwn=gwn.replace('.parquet','')
 
-		gwas.to_csv(args.outdir+"/"+gwn+".sumstats.gz", index=False, compression="gzip", sep="\t")
+		gwas.to_csv(outdir+"/"+gwn+".sumstats.gz", index=False, compression="gzip", sep="\t")
 
 if __name__ == '__main__':
     
