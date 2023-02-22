@@ -4,6 +4,7 @@ import pyspark.sql.functions as f
 from pyspark.sql.types import *
 from pyspark.sql.window import Window
 import numpy as np
+import os
 import argparse
 import gzip 
 #from scipy.stats import chi2
@@ -65,7 +66,7 @@ outdir="gs://genetics-portal-dev-analysis/xg1/rsid_sumstats"
 spark = SparkSession.builder.getOrCreate()
 
 # list GWAS sumstats:
-gwas_list=!gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas
+gwas_list=os.system("gsutil ls gs://genetics-portal-dev-sumstats/unfiltered/gwas")
 
 variant_index=spark.read.parquet(index)
 
